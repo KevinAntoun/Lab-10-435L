@@ -2,21 +2,17 @@
 pipeline {
     agent any
 
-
     environment {
         PYTHON_EXE = 'C:\\Users\\kevin\\AppData\\Local\\Programs\\Python\\Python313\\python.exe'
     }
 
-
     stages {
-
         stage('Setup') {
             steps {
                 bat '"%PYTHON_EXE%" -m venv venv'
                 bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
             }
         }
-
 
         stage('Lint') {
             steps {
@@ -30,19 +26,26 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage('Coverage') {
             steps {
-                echo 'Deploying application...'
+                bat 'venv\\Scripts\\python.exe -m coverage run --source=app -m pytest'
+                bat 'venv\\Scripts\\python.exe -m coverage report'
+                bat 'venv\\Scripts\\python.exe -m coverage html'
             }
         }
-    }
 
-    post {
-        success {
-            echo 'Pipeline completed successfully!'
+        stage('Security Scan') {
+            steps {
+                bat 'venv\\Scripts\\python.exe -m bandit app.py'
+            }
         }
-        failure {
-            echo 'Pipeline failed. Check the console output.'
+
+        stage('Deploy') {
+            steps {
+                bat 'if not exist "%JENKINS_HOME%\\deployments\\jenkins_project" mkdir "%JENKINS_HOME%\\deployments\\jenkins_project"'
+                bat 'copy /Y app.py "%JENKINS_HOME%\\deployments\\jenkins_project\\app.py"'
+                bat 'venv\\Scripts\\python.exe "%JENKINS_HOME%\\deployments\\jenkins_project\\app.py"'
+            }
         }
     }
 }
