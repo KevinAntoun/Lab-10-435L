@@ -2,13 +2,21 @@
 pipeline {
     agent any
 
+
+    environment {
+        PYTHON_EXE = 'C:\\Users\\kevin\\AppData\\Local\\Programs\\Python\\Python313\\python.exe'
+    }
+
+
     stages {
+
         stage('Setup') {
             steps {
-                bat 'python -m venv venv'
+                bat '"%PYTHON_EXE%" -m venv venv'
                 bat 'venv\\Scripts\\python.exe -m pip install -r requirements.txt'
             }
         }
+
 
         stage('Lint') {
             steps {
